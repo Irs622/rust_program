@@ -1,0 +1,9 @@
+[package]
+name = "verifier"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+shared = { path = "../shared" }
+rusqlite = { version = "0.30", features = ["bundled"] }
+dotenv = "0.15"

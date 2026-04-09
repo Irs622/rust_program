@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeriLog Integrity Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --green: #10b981;
+      --green-glow: rgba(16, 185, 129, 0.2);
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.2);
+      --accent: #3b82f6;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .header {
+      width: 100%;
+      padding: 2rem 0;
+      text-align: center;
+      background: rgba(30, 41, 59, 0.5);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .container {
+      margin-top: 4rem;
+      padding: 2.5rem;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+    }
+    .container.valid {
+      border-color: var(--green);
+      box-shadow: 0 0 40px var(--green-glow);
+    }
+    .container.tampered {
+      border-color: var(--red);
+      box-shadow: 0 0 40px var(--red-glow);
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 0.5rem 1.5rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 1.2rem;
+      margin-bottom: 1.5rem;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .status-badge.valid {
+      background: var(--green-glow);
+      color: var(--green);
+    }
+    .status-badge.tampered {
+      background: var(--red-glow);
+      color: var(--red);
+    }
+    .detail {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    button:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-1px, 0, 0); }
+      20%, 80% { transform: translate3d(2px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+      40%, 60% { transform: translate3d(4px, 0, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>VeriLog Integrity Center</h1>
+    <p style="color: #64748b; margin-top: 0.5rem;">Decentralized Audit Logging Engine</p>
+  </div>
+
+  <div class="container" id="statusContainer">
+    <div class="status-badge" id="statusBadge">PENDING</div>
+    <div class="detail" id="statusDetail">Click the button below to verify the integrity of the latest log batch against the blockchain.</div>
+    <button onclick="verifyIntegrity()" id="verifyBtn">Verify Integrity</button>
+  </div>
+
+  <script>
+    async function verifyIntegrity() {
+      const btn = document.getElementById('verifyBtn');
+      const badge = document.getElementById('statusBadge');
+      const detail = document.getElementById('statusDetail');
+      const container = document.getElementById('statusContainer');
+
+      btn.innerText = "Verifying...";
+      btn.style.opacity = 0.7;
+
+      try {
+        const res = await fetch('/api/verify');
+        const data = await res.json();
+
+        container.className = 'container';
+        badge.className = 'status-badge';
+
+        if (data.status === 'VALID') {
+          badge.innerText = '✅ VALID';
+          badge.classList.add('valid');
+          container.classList.add('valid');
+          detail.innerText = "The Merkle Root of the local database exactly matches the immutable hash stored on the Solana blockchain.";
+        } else if (data.status === 'TAMPERED') {
+          badge.innerText = '❌ TAMPERED';
+          badge.classList.add('tampered');
+          container.classList.add('tampered');
+          detail.innerHTML = `<strong>Data Manipulation Detected!</strong><br><br>${data.detail}`;
+        } else {
+          badge.innerText = 'NO DATA';
+          detail.innerText = data.detail || 'Await log generation...';
+        }
+      } catch (err) {
+        badge.innerText = 'ERROR';
+        detail.innerText = 'Failed to connect to Verifier Engine.';
+      } finally {
+        setTimeout(() => {
+          btn.innerText = "Verify Integrity";
+          btn.style.opacity = 1;
+        }, 500);
+      }
+    }
+  </script>
+</body>
+</html>
