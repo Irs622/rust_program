@@ -27,6 +27,9 @@ fn main() {
                 amount: row.get(2)?,
                 timestamp: row.get(3)?,
                 hash: Some(row.get(4)?),
+                batch_id: None,
+                event_type: None,
+                actor_id: None,
             })
         }).unwrap();
 

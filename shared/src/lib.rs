@@ -4,6 +4,33 @@ use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
 use rs_merkle::{MerkleTree, Hasher};
 
+// Standard API Contract
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ApiResponse<T> {
+    pub status: String,
+    pub data: T,
+    pub meta: Option<ApiMeta>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ApiMeta {
+    pub total: i64,
+    pub limit: i64,
+    pub offset: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ApiErrorData {
+    pub code: String,
+    pub message: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ApiErrorResponse {
+    pub status: String,
+    pub error: ApiErrorData,
+}
+
 #[derive(Clone)]
 pub struct Keccak256Algorithm {}
 
@@ -27,6 +54,9 @@ pub struct AuditLog {
     pub amount: f64,
     pub timestamp: String,
     pub hash: Option<String>,
+    pub batch_id: Option<String>,
+    pub event_type: Option<String>,
+    pub actor_id: Option<String>,
 }
 
 impl AuditLog {
@@ -48,8 +78,10 @@ pub fn generate_merkle_root(logs: &[AuditLog]) -> String {
         if let Some(h) = &log.hash {
             if let Ok(bytes) = hex::decode(h) {
                 let mut leaf = [0u8; 32];
-                leaf.copy_from_slice(&bytes[..32]);
-                leaves.push(leaf);
+                if bytes.len() >= 32 {
+                    leaf.copy_from_slice(&bytes[..32]);
+                    leaves.push(leaf);
+                }
             }
         }
     }
